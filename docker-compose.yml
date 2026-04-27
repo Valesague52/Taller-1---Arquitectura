@@ -1,0 +1,52 @@
+# ─────────────────────────────────────────────
+# docker-compose.yml - SneakerStore API
+# Universidad EAFIT - Taller de Construcción
+# ─────────────────────────────────────────────
+
+version: "3.9"
+
+services:
+  # Servicio principal de la API REST
+  api:
+    # Nombre del contenedor para identificación fácil
+    container_name: sneakerstore-api
+
+    # Construir imagen desde el Dockerfile en el directorio actual
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    # Mapeo de puertos: puerto_host:puerto_contenedor
+    ports:
+      - "8000:8000"
+
+    # Variables de entorno cargadas desde el archivo .env
+    env_file:
+      - .env
+
+    # Variables de entorno adicionales que sobreescriben las del .env
+    environment:
+      - PYTHONPATH=/app
+      - DATABASE_URL=sqlite:///./data/ecommerce_chat.db
+
+    # Volumen para persistir la base de datos SQLite fuera del contenedor
+    # Los datos sobreviven reinicios del contenedor
+    volumes:
+      - sqlite_data:/app/data
+
+    # Política de reinicio automático en caso de falla
+    restart: unless-stopped
+
+    # Healthcheck para monitorear el estado del servicio
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+# Volumen nombrado para persistencia de datos
+volumes:
+  sqlite_data:
+    name: sneakerstore_sqlite_data
+    driver: local
